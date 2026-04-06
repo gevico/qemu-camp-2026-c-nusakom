@@ -31,23 +31,27 @@ int main() {
     }
 
     int counter = 0;
+
     while (q.count > 1) {
         People p = q.data[q.head];
         q.head = (q.head + 1) % MAX_PEOPLE;
         q.count--;
-        
+
         counter++;
+
         if (counter == report_interval) {
-            // 报数到间隔，出列（不放回）
+            // ✅ 淘汰：必须输出
+            printf("淘汰: %d\n", p.id);
             counter = 0;
         } else {
-            // 未到间隔，放回队尾
+            // 放回队尾
             q.data[q.tail] = p;
             q.tail = (q.tail + 1) % MAX_PEOPLE;
             q.count++;
         }
     }
-    
+
+    // 最后剩下的人
     printf("最后剩下的人是: %d\n", q.data[q.head].id);
 
     return 0;

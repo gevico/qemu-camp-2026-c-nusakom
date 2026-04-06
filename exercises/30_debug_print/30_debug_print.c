@@ -17,7 +17,6 @@
 
 #endif
 
-//! MUST BE ENSURE THE DEBUG_PRINT("x=%d", x) AT THE 48 LINE
 // padding line 19
 // padding line 20
 // padding line 21
@@ -43,7 +42,12 @@
 // padding line 41
 // padding line 42
 // padding line 43
-// 测试代码
+// padding line 44
+// padding line 45
+// padding line 46
+// padding line 47
+
+// 第48行（必须精确）
 void test() {
     int x = 42;
     DEBUG_PRINT("x=%d", x);

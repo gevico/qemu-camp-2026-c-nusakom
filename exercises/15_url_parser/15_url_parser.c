@@ -46,7 +46,8 @@ int parse_url(const char* url) {
         }
         value[vi] = '\0';
 
-        printf("%s=%s\n", key, value);
+        // 按测试要求输出格式
+        printf("key = %s, value = %s\n", key, value);
 
         // 跳过 '&'
         if (*p == '&') p++;
