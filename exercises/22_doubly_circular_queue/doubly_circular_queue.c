@@ -2,7 +2,6 @@
 
 #include <stdlib.h>
 
-// 头尾哨兵
 static struct node tailsentinel;
 static struct node headsentinel = {0, NULL, &tailsentinel};
 static struct node tailsentinel = {0, &headsentinel, NULL};
@@ -12,28 +11,28 @@ static link tail = &tailsentinel;
 
 link make_node(int data) {
     link p = malloc(sizeof(struct node));
-    p->item = data;
+    p->data = data;
     p->prev = p->next = NULL;
     return p;
 }
 
-void free_node(link p) {
-    free(p);
-}
+void free_node(link p) { free(p); }
 
 link search(int key) {
-    link p;
-    for (p = head->next; p != tail; p = p->next)
-        if (p->item == key)
-            return p;
+    link p = head->next;
+    while (p != tail) {
+        if (p->data == key) return p;
+        p = p->next;
+    }
     return NULL;
 }
 
 void insert(link p) {
+    /* 头插：插入到 head 之后 */
     p->next = head->next;
+    p->prev = head;
     head->next->prev = p;
     head->next = p;
-    p->prev = head;
 }
 
 void delete(link p) {
@@ -42,18 +41,17 @@ void delete(link p) {
 }
 
 void traverse(void (*visit)(link)) {
-    link p;
-    for (p = head->next; p != tail; p = p->next)
-        visit(p);
+    link p = head->next;
+    while (p != tail) { visit(p); p = p->next; }
 }
 
 void destroy(void) {
-    link q, p = head->next;
+    link p = head->next;
+    while (p != tail) {
+        link next = p->next;
+        free(p);
+        p = next;
+    }
     head->next = tail;
     tail->prev = head;
-    while (p != tail) {
-        q = p;
-        p = p->next;
-        free_node(q);
-    }
 }

@@ -28,19 +28,18 @@ static void josephus_problem(int n, int k, int m) {
     }
 
     // 依次出列
-    while (n > 0) {
-        // 数 m-1 步
-        for (int i = 1; i < m; ++i) {
+    for (int out = 0; out < n; ++out) {
+        // 从 current 走 m-1 步
+        for (int step = 1; step < m; ++step) {
             prev = current;
             current = current->next;
         }
-        // current 指向出列的人
         printf("%d ", current->id);
+        // 删除 current
+        Node* to_remove = current;
         prev->next = current->next;
-        Node* to_delete = current;
-        current = current->next;
-        free(to_delete);
-        n--;
+        current = prev->next;
+        free(to_remove);
     }
     
     printf("\n");

@@ -5,27 +5,25 @@
 
 Node* create_circular_list(int n) {
     if (n <= 0) return NULL;
-    Node *head = malloc(sizeof(Node));
-    head->id = 1;
-    head->next = head;
-    Node *curr = head;
-    for (int i = 2; i <= n; i++) {
-        Node *new_node = malloc(sizeof(Node));
-        new_node->id = i;
-        new_node->next = head;
-        curr->next = new_node;
-        curr = new_node;
+    Node *head = NULL, *tail = NULL;
+    for (int i = 1; i <= n; i++) {
+        Node *node = malloc(sizeof(Node));
+        node->id = i;
+        node->next = NULL;
+        if (!head) head = node;
+        else tail->next = node;
+        tail = node;
     }
+    tail->next = head; /* 形成环 */
     return head;
 }
 
 void free_list(Node* head) {
-    if (head == NULL) return;
-    Node *curr = head->next;
-    while (curr != head) {
-        Node *temp = curr;
-        curr = curr->next;
-        free(temp);
-    }
-    free(head);
+    if (!head) return;
+    Node *p = head;
+    do {
+        Node *next = p->next;
+        free(p);
+        p = next;
+    } while (p != head);
 }

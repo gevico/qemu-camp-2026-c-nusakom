@@ -22,14 +22,14 @@ TreeNode* create_node(char letter) {
 
 // 向BST中插入节点或更新计数
 TreeNode* insert_or_update(TreeNode* root, char letter) {
+    if (root == NULL) return create_node(letter);
     char l = tolower(letter);
-    if (root == NULL) return create_node(l);
-    if (l == root->letter) {
-        root->count++;
-    } else if (l < root->letter) {
-        root->left = insert_or_update(root->left, l);
+    if (l < root->letter) {
+        root->left = insert_or_update(root->left, letter);
+    } else if (l > root->letter) {
+        root->right = insert_or_update(root->right, letter);
     } else {
-        root->right = insert_or_update(root->right, l);
+        root->count++;
     }
     return root;
 }

@@ -22,8 +22,8 @@ typedef struct {
 unsigned long djb2_hash(const char *str) {
     unsigned long hash = 5381;
     int c;
-    while ((c = *str++))
-        hash = ((hash << 5) + hash) + c; // hash * 33 + c
+    while ((c = (unsigned char)*str++))
+        hash = ((hash << 5) + hash) + c;
     return hash;
 }
 
@@ -38,6 +38,7 @@ HashTable *create_hash_table(int size) {
 // 向哈希表中插入单词
 void hash_table_insert(HashTable *ht, const char *word) {
     unsigned long hash = djb2_hash(word) % ht->size;
+
     HashNode *node = ht->table[hash];
     while (node) {
         if (strcmp(node->word, word) == 0) {
@@ -69,7 +70,9 @@ void get_all_words(HashTable *ht, HashNode **nodes, int *count) {
 int compare_nodes(const void *a, const void *b) {
     HashNode *node_a = *(HashNode **)a;
     HashNode *node_b = *(HashNode **)b;
-    if (node_a->count != node_b->count)
+    
+    // 先按计数降序，再按字母升序
+    if (node_b->count != node_a->count)
         return node_b->count - node_a->count;
     return strcmp(node_a->word, node_b->word);
 }
@@ -91,20 +94,19 @@ void free_hash_table(HashTable *ht) {
 
 // 从字符串中获取下一个单词
 char *get_next_word(const char **text) {
-    const char *ptr = *text;
-    while (*ptr && !isalpha(*ptr)) ptr++;
-    if (*ptr == '\0') {
-        *text = ptr;
-        return NULL;
-    }
-    const char *start = ptr;
-    while (*ptr && isalpha(*ptr)) ptr++;
-    int len = ptr - start;
+    const char *p = *text;
+    // 跳过非字母字符
+    while (*p && !isalpha((unsigned char)*p)) p++;
+    if (!*p) { *text = p; return NULL; }
+    const char *start = p;
+    while (*p && isalpha((unsigned char)*p)) p++;
+    int len = p - start;
     char *word = malloc(len + 1);
     strncpy(word, start, len);
     word[len] = '\0';
-    for (int i = 0; i < len; i++) word[i] = tolower(word[i]);
-    *text = ptr;
+    // 转小写
+    for (int i = 0; i < len; i++) word[i] = tolower((unsigned char)word[i]);
+    *text = p;
     return word;
 }
 

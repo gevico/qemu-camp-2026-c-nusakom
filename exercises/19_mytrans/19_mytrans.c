@@ -28,7 +28,7 @@ int main() {
 
   FILE* file = fopen("text.txt", "r");
   if (file == NULL) {
-    fprintf(stderr, "无法打开文件 text.txt。\n");
+    fprintf(stderr, "无法打开文件 dict.txt。\n");
     free_hash_table(table);
     return 1;
   }
@@ -41,16 +41,17 @@ int main() {
         continue;
     }
 
-    char *word = strtok(line, " ");
-    while (word != NULL) {
-        to_lowercase(word);
-        const char *translation = hash_table_lookup(table, word);
+    // 使用 strtok 按空格分割单词
+    char *token = strtok(line, " \t");
+    while (token != NULL) {
+        to_lowercase(token);
+        const char *translation = hash_table_lookup(table, token);
         if (translation) {
-            printf("%s: %s\n", word, translation);
+            printf("%s: %s\n", token, translation);
         } else {
-            printf("%s: [未找到翻译]\n", word);
+            printf("%s: (未找到翻译)\n", token);
         }
-        word = strtok(NULL, " ");
+        token = strtok(NULL, " \t");
     }
   }
 

@@ -1,86 +1,79 @@
 #include <stdio.h>
+#include <stdbool.h>
 
 #define MAX_ROW 5
 #define MAX_COL 5
 
 int maze[MAX_ROW][MAX_COL] = {
-    0, 1, 0, 0, 0,
-    0, 1, 0, 1, 0,
-    0, 0, 0, 0, 0,
-    0, 1, 1, 1, 0,
-    0, 0, 0, 1, 0,
+	0, 1, 0, 0, 0,
+	0, 1, 0, 1, 0,
+	0, 0, 0, 0, 0,
+	0, 1, 1, 1, 0,
+	0, 0, 0, 1, 0,
 };
 
-int visited[MAX_ROW][MAX_COL] = {0};
+struct point {
+    int row, col;
+} stack[MAX_ROW * MAX_COL];
 
-// 四个方向：下、右、上、左
-int dirs[4][2] = {
-    {1, 0},
-    {0, 1},
-    {-1, 0},
-    {0, -1}
+int top = 0;
+
+void push(struct point p) {
+    stack[top++] = p;
+}
+
+struct point pop(void) {
+    return stack[--top];
+}
+
+bool is_empty(void) {
+    return top == 0;
+}
+
+struct point predecessor[MAX_ROW][MAX_COL] = {
+    {{-1, -1}, {-1, -1}, {-1, -1}, {-1, -1}, {-1, -1}},
+    {{-1, -1}, {-1, -1}, {-1, -1}, {-1, -1}, {-1, -1}},
+    {{-1, -1}, {-1, -1}, {-1, -1}, {-1, -1}, {-1, -1}},
+    {{-1, -1}, {-1, -1}, {-1, -1}, {-1, -1}, {-1, -1}},
+    {{-1, -1}, {-1, -1}, {-1, -1}, {-1, -1}, {-1, -1}},
 };
 
-typedef struct {
-    int x, y;
-} Point;
-
-Point stack[MAX_ROW * MAX_COL];
-int top = -1;
-
-void push(Point p) {
-    stack[++top] = p;
-}
-
-Point pop() {
-    return stack[top--];
-}
-
-int is_empty() {
-    return top == -1;
-}
-
-int solve_maze(int start_x, int start_y) {
-    Point start = {start_x, start_y};
-    push(start);
-    visited[start_x][start_y] = 1;
-
-    while (!is_empty()) {
-        Point curr = pop();
-
-        if (curr.x == MAX_ROW - 1 && curr.y == MAX_COL - 1)
-            return 1;
-
-        for (int i = 0; i < 4; i++) {
-            int nx = curr.x + dirs[i][0];
-            int ny = curr.y + dirs[i][1];
-
-            if (nx >= 0 && nx < MAX_ROW && ny >= 0 && ny < MAX_COL &&
-                maze[nx][ny] == 0 && !visited[nx][ny]) {
-                visited[nx][ny] = 1;
-                push((Point){nx, ny});
-            }
-        }
-    }
-    return 0;
+void visit(int row, int col, struct point p) {
+    struct point visit_p = {row, col};
+    maze[row][col] = 2;
+    predecessor[row][col] = p;
+    push(visit_p);
 }
 
 int main(void)
 {
-    if (solve_maze(0, 0)) {
-        printf("存在路径！\n");
-    } else {
-        printf("不存在路径！\n");
+    struct point p = {0, 0};
+    maze[p.row][p.col] = 2;
+    push(p);
+
+    while (!is_empty()) {
+        p = pop();
+        if (p.row == MAX_ROW - 1 && p.col == MAX_COL - 1)
+            break;
+        if (p.col + 1 < MAX_COL && maze[p.row][p.col + 1] == 0)
+            visit(p.row, p.col + 1, p);
+        if (p.row + 1 < MAX_ROW && maze[p.row + 1][p.col] == 0)
+            visit(p.row + 1, p.col, p);
+        if (p.col - 1 >= 0 && maze[p.row][p.col - 1] == 0)
+            visit(p.row, p.col - 1, p);
+        if (p.row - 1 >= 0 && maze[p.row - 1][p.col] == 0)
+            visit(p.row - 1, p.col, p);
     }
 
-    // 输出访问路径（可选）
-    printf("\n访问路径标记（1表示走过）：\n");
-    for (int i = 0; i < MAX_ROW; i++) {
-        for (int j = 0; j < MAX_COL; j++) {
-            printf("%d ", visited[i][j]);
+    if (p.row == MAX_ROW - 1 && p.col == MAX_COL - 1) {
+        printf("(%d, %d)\n", p.row, p.col);
+        while (predecessor[p.row][p.col].row != -1) {
+            p = predecessor[p.row][p.col];
+            printf("(%d, %d)\n", p.row, p.col);
         }
-        printf("\n");
+    } else {
+        printf("No path!\n");
     }
 
-    return 0;
+	return 0;
 }

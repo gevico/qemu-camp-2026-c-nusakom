@@ -18,24 +18,18 @@ static int is_delim(char c, const char *delim) {
 }
 
 /* 线程安全版本：通过 saveptr 维护调用状态，不使用静态变量 */
-char *strtok_r(char *str, const char *delim, char **saveptr) {
-    char *token;
-    if (str == NULL) str = *saveptr;
-    if (str == NULL) return NULL;
+char *my_strtok_r(char *str, const char *delim, char **saveptr) {
+    char *p = str ? str : *saveptr;
+    if (!p) return NULL;
 
-    while (*str && is_delim(*str, delim)) str++;
-    if (*str == '\0') {
-        *saveptr = NULL;
-        return NULL;
-    }
-    token = str;
-    while (*str && !is_delim(*str, delim)) str++;
-    if (*str) {
-        *str = '\0';
-        *saveptr = str + 1;
-    } else {
-        *saveptr = NULL;
-    }
+    /* 跳过前导分隔符 */
+    while (*p && is_delim(*p, delim)) p++;
+    if (!*p) { *saveptr = NULL; return NULL; }
+
+    char *token = p;
+    while (*p && !is_delim(*p, delim)) p++;
+    if (*p) { *p = '\0'; p++; }
+    *saveptr = p;
     return token;
 }
 
@@ -44,10 +38,10 @@ int main(void) {
     const char *delim = ", ";
     char *save = NULL;
 
-    char *tok = strtok_r(buf, delim, &save);
+    char *tok = my_strtok_r(buf, delim, &save);
     while (tok) {
         printf("%s\n", tok);
-        tok = strtok_r(NULL, delim, &save);
+        tok = my_strtok_r(NULL, delim, &save);
     }
     return 0;
 }

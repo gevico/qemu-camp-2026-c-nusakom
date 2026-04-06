@@ -3,26 +3,21 @@
 #include <stdlib.h>
 #include <string.h>
 
-/*
- * 18 线程安全环形缓冲区 Ring Buffer
- * 要求：使用互斥锁与条件变量实现多线程生产者/消费者的有界环形队列
- */
-
 typedef struct {
-    int *buf;                 /* 数据缓冲区（整数队列） */
-    size_t capacity;          /* 容量（元素个数） */
-    size_t head;              /* 读指针 */
-    size_t tail;              /* 写指针 */
-    size_t count;             /* 当前元素个数 */
-    pthread_mutex_t mtx;      /* 互斥锁 */
-    pthread_cond_t not_full;  /* 条件：非满 */
-    pthread_cond_t not_empty; /* 条件：非空 */
+    int *buf;
+    size_t capacity;
+    size_t head;
+    size_t tail;
+    size_t count;
+    pthread_mutex_t mtx;
+    pthread_cond_t not_full;
+    pthread_cond_t not_empty;
 } ring_buffer_t;
 
 static int rb_init(ring_buffer_t *rb, size_t capacity) {
-    rb->capacity = capacity;
     rb->buf = malloc(capacity * sizeof(int));
     if (!rb->buf) return -1;
+    rb->capacity = capacity;
     rb->head = rb->tail = rb->count = 0;
     pthread_mutex_init(&rb->mtx, NULL);
     pthread_cond_init(&rb->not_full, NULL);
@@ -37,12 +32,10 @@ static void rb_destroy(ring_buffer_t *rb) {
     pthread_cond_destroy(&rb->not_empty);
 }
 
-/* 入队：满则等待 not_full */
 static void rb_push(ring_buffer_t *rb, int val) {
     pthread_mutex_lock(&rb->mtx);
-    while (rb->count == rb->capacity) {
+    while (rb->count == rb->capacity)
         pthread_cond_wait(&rb->not_full, &rb->mtx);
-    }
     rb->buf[rb->tail] = val;
     rb->tail = (rb->tail + 1) % rb->capacity;
     rb->count++;
@@ -50,12 +43,10 @@ static void rb_push(ring_buffer_t *rb, int val) {
     pthread_mutex_unlock(&rb->mtx);
 }
 
-/* 出队：空则等待 not_empty */
 static int rb_pop(ring_buffer_t *rb, int *out) {
     pthread_mutex_lock(&rb->mtx);
-    while (rb->count == 0) {
+    while (rb->count == 0)
         pthread_cond_wait(&rb->not_empty, &rb->mtx);
-    }
     *out = rb->buf[rb->head];
     rb->head = (rb->head + 1) % rb->capacity;
     rb->count--;
@@ -64,40 +55,28 @@ static int rb_pop(ring_buffer_t *rb, int *out) {
     return 0;
 }
 
-typedef struct {
-    ring_buffer_t *rb;
-    const int *data;
-    size_t n;
-} producer_arg_t;
-
-typedef struct {
-    ring_buffer_t *rb;
-    size_t n;
-} consumer_arg_t;
+typedef struct { ring_buffer_t *rb; const int *data; size_t n; } producer_arg_t;
+typedef struct { ring_buffer_t *rb; size_t n; } consumer_arg_t;
 
 static void *producer(void *arg) {
-    producer_arg_t *pa = (producer_arg_t *)arg;
-    for (size_t i = 0; i < pa->n; i++) {
+    producer_arg_t *pa = arg;
+    for (size_t i = 0; i < pa->n; i++)
         rb_push(pa->rb, pa->data[i]);
-    }
     return NULL;
 }
 
 static void *consumer(void *arg) {
-    consumer_arg_t *ca = (consumer_arg_t *)arg;
+    consumer_arg_t *ca = arg;
     for (size_t i = 0; i < ca->n; i++) {
         int val;
         rb_pop(ca->rb, &val);
-        printf("consumed: %d\n", val);
+        printf("%d\n", val);
     }
     return NULL;
 }
 
 int main(void) {
-    /* 输入：缓冲区容量 5，生产者线程写入 [1,2,3,4,5,6]（第 6 个元素等待消费者读取后写入）
-     * 输出：消费者打印 1,2,3,4,5,6（顺序正确，无数据丢失）。
-     */
-    setvbuf(stdout, NULL, _IOLBF, 0); /* 行缓冲，便于在测试中看到输出 */
+    setvbuf(stdout, NULL, _IOLBF, 0);
 
     ring_buffer_t rb;
     if (rb_init(&rb, 5) != 0) {

@@ -56,21 +56,32 @@ int main(void)
 int shell_parse(char *buf, char *argv[])
 {
     int argc = 0;
+    int state = 0; // 0: 寻找参数起始, 1: 正在解析普通参数, 2: 正在解析引号内参数
     char *p = buf;
-    int state = 0; // 0: outside word, 1: inside word
 
-    while (*p != '\0' && argc < MAX_ARGS) {
-        if (*p == ' ' || *p == '\t' || *p == '\r' || *p == '\n') {
-            if (state == 1) {
+    while (*p != '\0') {
+        if (state == 0) {
+            if (*p == ' ' || *p == '\t') {
+                // 跳过空白
+            } else if (*p == '"') {
+                state = 2;
+                argv[argc++] = p + 1;
+            } else {
+                state = 1;
+                argv[argc++] = p;
+            }
+        } else if (state == 1) {
+            if (*p == ' ' || *p == '\t') {
                 *p = '\0';
                 state = 0;
             }
-        } else {
-            if (state == 0) {
-                argv[argc++] = p;
-                state = 1;
+        } else if (state == 2) {
+            if (*p == '"') {
+                *p = '\0';
+                state = 0;
             }
         }
+        if (argc >= MAX_ARGS) break;
         p++;
     }
     argv[argc] = NULL;

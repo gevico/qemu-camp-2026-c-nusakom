@@ -1,10 +1,15 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <execinfo.h>
 
-#ifdef DEBUG
+#ifndef DEBUG_LEVEL
+#define DEBUG_LEVEL 0
+#endif
+
+#if DEBUG_LEVEL >= 2
 
 #define DEBUG_PRINT(fmt, ...) \
-    printf("[%s:%d %s] " fmt "\n", __FILE__, __LINE__, __FUNCTION__, ##__VA_ARGS__)
+    printf("DEBUG: func=%s, line=%d, " fmt "\n", __func__, __LINE__, ##__VA_ARGS__)
 
 #else
 
@@ -12,36 +17,32 @@
 
 #endif
 
-
-// 为了满足 48 行的要求，增加一些空行
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
 //! MUST BE ENSURE THE DEBUG_PRINT("x=%d", x) AT THE 48 LINE
-
+// padding line 19
+// padding line 20
+// padding line 21
+// padding line 22
+// padding line 23
+// padding line 24
+// padding line 25
+// padding line 26
+// padding line 27
+// padding line 28
+// padding line 29
+// padding line 30
+// padding line 31
+// padding line 32
+// padding line 33
+// padding line 34
+// padding line 35
+// padding line 36
+// padding line 37
+// padding line 38
+// padding line 39
+// padding line 40
+// padding line 41
+// padding line 42
+// padding line 43
 // 测试代码
 void test() {
     int x = 42;

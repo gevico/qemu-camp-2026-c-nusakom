@@ -28,16 +28,13 @@ typedef struct {
 
 /* 接口：初始化动态数组 */
 GArray* garray_init(size_t elem_size) {
-    GArray* arr = malloc(sizeof(GArray));
+    GArray *arr = malloc(sizeof(GArray));
     if (!arr) return NULL;
-    arr->elem_size = elem_size;
+    arr->data = malloc(GARRAY_INIT_CAP * elem_size);
+    if (!arr->data) { free(arr); return NULL; }
     arr->len = 0;
     arr->capacity = GARRAY_INIT_CAP;
-    arr->data = malloc(arr->capacity * arr->elem_size);
-    if (!arr->data) {
-        free(arr);
-        return NULL;
-    }
+    arr->elem_size = elem_size;
     return arr;
 }
 
@@ -53,9 +50,10 @@ void garray_append(GArray* arr, void* elem) {
 
 /* 接口：释放动态数组 */
 void garray_free(GArray* arr) {
-    if (!arr) return;
-    free(arr->data);
-    free(arr);
+    if (arr) {
+        free(arr->data);
+        free(arr);
+    }
 }
 
 int main(void) {

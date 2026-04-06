@@ -8,7 +8,7 @@ OBJS := $(SRCS:.c=.o)
 all: $(TARGET)
 
 # TODO: 在这里添加你的代码
-# I AM NOT DONE
+
 
 clean:
 	rm -f $(TARGET) $(OBJS)

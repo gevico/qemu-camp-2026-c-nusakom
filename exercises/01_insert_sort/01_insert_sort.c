@@ -9,16 +9,14 @@ typedef struct {
 
 void insertion_sort(Student students[], int n) {
     for (int i = 1; i < n; i++) {
-        Student key = students[i];  // 当前要插入的元素
+        Student key = students[i];
         int j = i - 1;
-
-        // 注意：这里是“从高到低”，所以用 <
+        // 按成绩从高到低排序
         while (j >= 0 && students[j].score < key.score) {
-            students[j + 1] = students[j];  // 向后移动
+            students[j + 1] = students[j];
             j--;
         }
-
-        students[j + 1] = key;  // 插入到正确位置
+        students[j + 1] = key;
     }
 }
 

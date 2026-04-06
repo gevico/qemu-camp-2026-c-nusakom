@@ -17,8 +17,19 @@ int compareString(const void *a, const void *b) {
     return strcmp(*(char**)a, *(char**)b);
 }
 
-void sort(void *array, size_t n, size_t size, CompareFunc compare) {
-    qsort(array, n, size, compare);
+void universal_sort(void *base, int n, int size, int (*compare)(const void *, const void *)) {
+    char *p = (char *)base;
+    char *temp = (char *)malloc(size);
+    for (int i = 0; i < n - 1; i++) {
+        for (int j = 0; j < n - 1 - i; j++) {
+            if (compare(p + j * size, p + (j + 1) * size) > 0) {
+                memcpy(temp, p + j * size, size);
+                memcpy(p + j * size, p + (j + 1) * size, size);
+                memcpy(p + (j + 1) * size, temp, size);
+            }
+        }
+    }
+    free(temp);
 }
 
 void processFile(const char *filename) {
@@ -40,41 +51,27 @@ void processFile(const char *filename) {
     printf("=== 处理数据来自: %s ===\n", filename);
 
     switch (choice) {
-        case 1: { // int
+        case 1: {
             int arr[20];
             for (int i = 0; i < n; i++) fscanf(fin, "%d", &arr[i]);
-            qsort(arr, n, sizeof(int), compareInt);
-            printf("排序后的整数: ");
+            universal_sort(arr, n, sizeof(int), compareInt);
+            printf("整数排序结果: ");
             for (int i = 0; i < n; i++) printf("%d ", arr[i]);
             printf("\n");
             break;
         }
-        case 2: { // float
+        case 2: {
             float arr[20];
             for (int i = 0; i < n; i++) fscanf(fin, "%f", &arr[i]);
-            qsort(arr, n, sizeof(float), compareFloat);
-            printf("排序后的浮点数: ");
+            universal_sort(arr, n, sizeof(float), compareFloat);
+            printf("浮点数排序结果: ");
             for (int i = 0; i < n; i++) printf("%.2f ", arr[i]);
             printf("\n");
             break;
         }
-        case 3: { // string
-            char *arr[20];
-            for (int i = 0; i < n; i++) {
-                arr[i] = malloc(100);
-                fscanf(fin, "%s", arr[i]);
-            }
-            qsort(arr, n, sizeof(char*), compareString);
-            printf("排序后的字符串: ");
-            for (int i = 0; i < n; i++) {
-                printf("%s ", arr[i]);
-                free(arr[i]);
-            }
-            printf("\n");
-            break;
-        }
         default:
-            printf("不支持的排序类型: %d\n", choice);
+            printf("错误: 未知类型 %d\n", choice);
+            break;
     }
 
     fclose(fin);

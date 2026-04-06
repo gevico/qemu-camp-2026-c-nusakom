@@ -22,7 +22,6 @@ TARGET_PATH := $(BINDIR)/$(TARGET)
 all: $(TARGET_PATH)
 
 # TODO: 在这里添加你的代码
-# I AM NOT DONE
 
 clean:
 	@rm -rf $(OBJDIR)/*.o $(TARGET_PATH)

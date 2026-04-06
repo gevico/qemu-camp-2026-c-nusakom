@@ -12,28 +12,45 @@
 int parse_url(const char* url) {
     int err = 0;
 
-    const char *p = strchr(url, '?');
-    if (p == NULL) {
-        printf("No parameters found\n");
-        return 0;
+    // 找到 '?' 的位置
+    const char* query = strchr(url, '?');
+    if (!query) {
+        err = -1;
+        goto exit;
     }
-    p++; // Skip '?'
+    query++; // 跳过 '?'
 
-    char *query = strdup(p);
-    if (query == NULL) return -ENOMEM;
+    char key[256], value[256];
+    const char* p = query;
 
-    char *pair;
-    char *saveptr1, *saveptr2;
-    pair = strtok_r(query, "&", &saveptr1);
-    while (pair != NULL) {
-        char *key = strtok_r(pair, "=", &saveptr2);
-        char *value = strtok_r(NULL, "=", &saveptr2);
-        if (key && value) {
-            printf("%s: %s\n", key, value);
+    while (*p) {
+        // 解析 key
+        int ki = 0;
+        while (*p && *p != '=' && *p != '&') {
+            key[ki++] = *p++;
         }
-        pair = strtok_r(NULL, "&", &saveptr1);
+        key[ki] = '\0';
+
+        // 跳过 '='
+        if (*p == '=') p++;
+
+        // 解析 value
+        int vi = 0;
+        while (*p && *p != '&') {
+            if (*p == '+') {
+                value[vi++] = ' ';
+                p++;
+            } else {
+                value[vi++] = *p++;
+            }
+        }
+        value[vi] = '\0';
+
+        printf("%s=%s\n", key, value);
+
+        // 跳过 '&'
+        if (*p == '&') p++;
     }
-    free(query);
 
 exit:
     return err;

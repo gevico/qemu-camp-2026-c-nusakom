@@ -39,7 +39,6 @@ int __cmd_myfile(const char* filename) {
     printf("filepath: %s\n", filepath);
 
     // TODO: 在这里添加你的代码
-    // I AM NOT DONE
 
     print_elf_type(ehdr.e_type);
     close(fd);

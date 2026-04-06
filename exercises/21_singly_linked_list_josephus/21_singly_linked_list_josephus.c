@@ -64,25 +64,26 @@ void josephus_problem(int n, int k, int m) {
     // 依次出列并打印顺序
     for (int out = 0; out < n; ++out) {
         if (m == 1) {
-            link to_delete = current;
+            // m==1 时当前节点直接出列
+            printf("%d ", current->item);
+            link to_remove = current;
             current = next_wrap(current);
-            print_item(to_delete);
-            delete(to_delete);
-            free_node(to_delete);
+            delete(to_remove);
+            free_node(to_remove);
             continue;
         }
 
         // 数到 m 的那个人出列：从 current 开始走 m-1 步，落在第 m 个节点
-        for (int i = 1; i < m; ++i) {
+        for (int step = 1; step < m; step++) {
             current = next_wrap(current);
         }
 
         // 此时 current 指向要出列的人
-        link to_delete = current;
+        printf("%d ", current->item);
+        link to_remove = current;
         current = next_wrap(current);
-        print_item(to_delete);
-        delete(to_delete);
-        free_node(to_delete);
+        delete(to_remove);
+        free_node(to_remove);
     }
 
     printf("\n");

@@ -14,44 +14,28 @@ Student students[MAX_STUDENTS];
 Student temp[MAX_STUDENTS];
 
 void merge(int left, int mid, int right) {
-    int i = left;
-    int j = mid + 1;
-    int k = left;
-
-    // 合并两个有序区间
+    int i = left, j = mid + 1, k = left;
     while (i <= mid && j <= right) {
-        // 降序：score 大的在前
         if (students[i].score >= students[j].score) {
             temp[k++] = students[i++];
         } else {
             temp[k++] = students[j++];
         }
     }
-
-    // 处理剩余元素
-    while (i <= mid) {
-        temp[k++] = students[i++];
-    }
-
-    while (j <= right) {
-        temp[k++] = students[j++];
-    }
-
-    // 拷贝回原数组
-    for (int t = left; t <= right; t++) {
-        students[t] = temp[t];
+    while (i <= mid) temp[k++] = students[i++];
+    while (j <= right) temp[k++] = students[j++];
+    for (i = left; i <= right; i++) {
+        students[i] = temp[i];
     }
 }
 
 void merge_sort(int left, int right) {
-    if (left >= right) return;
-
-    int mid = (left + right) / 2;
-
-    merge_sort(left, mid);
-    merge_sort(mid + 1, right);
-
-    merge(left, mid, right);
+    if (left < right) {
+        int mid = left + (right - left) / 2;
+        merge_sort(left, mid);
+        merge_sort(mid + 1, right);
+        merge(left, mid, right);
+    }
 }
 
 int main(void) {
