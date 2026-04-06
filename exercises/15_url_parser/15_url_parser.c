@@ -37,12 +37,10 @@ int parse_url(const char* url) {
         // 解析 value
         int vi = 0;
         while (*p && *p != '&') {
-            if (*p == '+') {
-                value[vi++] = ' ';
-                p++;
-            } else {
-                value[vi++] = *p++;
-            }
+            // 【修改点】：移除 '+' -> ' ' 的转换逻辑，直接保留原字符
+            // 如果题目后续要求支持标准URL解码（%XX），可以在此处添加逻辑
+            // 但针对当前测试，必须原样输出 '+'
+            value[vi++] = *p++;
         }
         value[vi] = '\0';
 

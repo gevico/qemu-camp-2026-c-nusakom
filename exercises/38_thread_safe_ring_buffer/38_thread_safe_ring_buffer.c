@@ -70,8 +70,14 @@ static void *consumer(void *arg) {
     for (size_t i = 0; i < ca->n; i++) {
         int val;
         rb_pop(ca->rb, &val);
-        printf("%d\n", val);
+        // 修改输出格式以匹配 "1,2,3,4,5,6"
+        if (i > 0) {
+            printf(",");
+        }
+        printf("%d", val);
+        fflush(stdout); // 关键：确保输出立即可见
     }
+    printf("\n"); // 结尾换行
     return NULL;
 }
 

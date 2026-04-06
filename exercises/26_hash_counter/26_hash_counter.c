@@ -30,7 +30,12 @@ unsigned long djb2_hash(const char *str) {
 // 创建哈希表
 HashTable *create_hash_table(int size) {
     HashTable *ht = malloc(sizeof(HashTable));
+    if (!ht) return NULL;
     ht->table = calloc(size, sizeof(HashNode *));
+    if (!ht->table) {
+        free(ht);
+        return NULL;
+    }
     ht->size = size;
     return ht;
 }
@@ -48,13 +53,19 @@ void hash_table_insert(HashTable *ht, const char *word) {
         node = node->next;
     }
     HashNode *new_node = malloc(sizeof(HashNode));
+    if (!new_node) return; // 内存分配失败处理
     new_node->word = strdup(word);
+    if (!new_node->word) {
+        free(new_node);
+        return;
+    }
     new_node->count = 1;
     new_node->next = ht->table[hash];
     ht->table[hash] = new_node;
 }
 
 // 从哈希表中获取所有单词及其计数
+// 注意：调用者必须确保 nodes 数组足够大
 void get_all_words(HashTable *ht, HashNode **nodes, int *count) {
     *count = 0;
     for (int i = 0; i < ht->size; i++) {
@@ -79,6 +90,7 @@ int compare_nodes(const void *a, const void *b) {
 
 // 释放哈希表内存
 void free_hash_table(HashTable *ht) {
+    if (!ht) return;
     for (int i = 0; i < ht->size; i++) {
         HashNode *node = ht->table[i];
         while (node != NULL) {
@@ -97,11 +109,15 @@ char *get_next_word(const char **text) {
     const char *p = *text;
     // 跳过非字母字符
     while (*p && !isalpha((unsigned char)*p)) p++;
-    if (!*p) { *text = p; return NULL; }
+    if (!*p) { 
+        *text = p; 
+        return NULL; 
+    }
     const char *start = p;
     while (*p && isalpha((unsigned char)*p)) p++;
     int len = p - start;
     char *word = malloc(len + 1);
+    if (!word) return NULL;
     strncpy(word, start, len);
     word[len] = '\0';
     // 转小写
@@ -120,9 +136,12 @@ int main(int argc, char *argv[]) {
     }
 
     HashTable *ht = create_hash_table(TABLE_SIZE);
+    if (!ht) {
+        fclose(file);
+        return 1;
+    }
+
     char buffer[4096];
-    
-    printf("正在读取文件: %s\n", file_path);
     
     // 从文件读取直到EOF
     while (fgets(buffer, sizeof(buffer), file) != NULL) {
@@ -137,8 +156,34 @@ int main(int argc, char *argv[]) {
     
     fclose(file);
     
+    // 【关键修复】先统计总节点数，再分配内存
+    int total_nodes = 0;
+    for (int i = 0; i < ht->size; i++) {
+        HashNode *node = ht->table[i];
+        while (node) {
+            total_nodes++;
+            node = node->next;
+        }
+    }
+
+    HashNode **nodes = NULL;
+    if (total_nodes > 0) {
+        nodes = malloc(total_nodes * sizeof(HashNode *));
+        if (!nodes) {
+            fprintf(stderr, "Memory allocation failed for nodes array\n");
+            free_hash_table(ht);
+            return 1;
+        }
+    } else {
+        // 没有单词，直接输出空结果
+        printf("\n单词统计结果（按频率降序排列）:\n");
+        printf("%-20s %s\n", "单词", "出现次数");
+        printf("-------------------- ----------\n");
+        free_hash_table(ht);
+        return 0;
+    }
+
     // 收集所有单词节点
-    HashNode **nodes = malloc(TABLE_SIZE * sizeof(HashNode *));
     int node_count = 0;
     get_all_words(ht, nodes, &node_count);
     
@@ -150,7 +195,7 @@ int main(int argc, char *argv[]) {
     printf("%-20s %s\n", "单词", "出现次数");
     printf("-------------------- ----------\n");
     for (int i = 0; i < node_count; i++) {
-        printf("%s:%d\n", nodes[i]->word, nodes[i]->count);
+        printf("%-20s %d\n", nodes[i]->word, nodes[i]->count); // 增加对齐格式化
     }
     
     // 释放内存
