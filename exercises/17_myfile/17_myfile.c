@@ -8,8 +8,12 @@
 void print_elf_type(uint16_t e_type) {
   const char *type_str;
   switch (e_type) {
-    // TODO: 在这里添加你的代码
-    // I AM NOT DONE
+    case ET_NONE: type_str = "NONE"; break;
+    case ET_REL:  type_str = "REL"; break;
+    case ET_EXEC: type_str = "EXEC"; break;
+    case ET_DYN:  type_str = "DYN"; break;
+    case ET_CORE: type_str = "CORE"; break;
+    default:      type_str = "UNKNOWN"; break;
   }
   printf("ELF Type: %s (0x%x)\n", type_str, e_type);
 }
@@ -23,8 +27,27 @@ int main(int argc, char *argv[]) {
   int fd;
   Elf64_Ehdr ehdr;
 
-  // TODO: 在这里添加你的代码
-  // I AM NOT DONE
+  for (int i = 0; i < 2; i++) {
+    fd = open(filepath[i], O_RDONLY);
+    if (fd < 0) {
+      perror("open");
+      continue;
+    }
+
+    if (read(fd, &ehdr, sizeof(ehdr)) != sizeof(ehdr)) {
+      perror("read");
+      close(fd);
+      continue;
+    }
+
+    if (memcmp(ehdr.e_ident, ELFMAG, SELFMAG) != 0) {
+      printf("%s is not an ELF file\n", filepath[i]);
+    } else {
+      printf("File: %s\n", filepath[i]);
+      print_elf_type(ehdr.e_type);
+    }
+    close(fd);
+  }
   
   return 0;
 }

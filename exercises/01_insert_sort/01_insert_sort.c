@@ -8,8 +8,18 @@ typedef struct {
 } Student;
 
 void insertion_sort(Student students[], int n) {
-    // TODO: 在这里添加你的代码
-    // I AM NOT DONE
+    for (int i = 1; i < n; i++) {
+        Student key = students[i];  // 当前要插入的元素
+        int j = i - 1;
+
+        // 注意：这里是“从高到低”，所以用 <
+        while (j >= 0 && students[j].score < key.score) {
+            students[j + 1] = students[j];  // 向后移动
+            j--;
+        }
+
+        students[j + 1] = key;  // 插入到正确位置
+    }
 }
 
 int main(void) {

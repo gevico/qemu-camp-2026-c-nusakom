@@ -12,9 +12,35 @@ typedef struct {
 
 Student students[MAX_STUDENTS];
 
+void swap(Student *a, Student *b) {
+    Student temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
+int partition(int left, int right) {
+    Student pivot = students[right];  // 选最后一个作为基准
+    int i = left - 1;
+
+    for (int j = left; j < right; j++) {
+        // 降序：大于等于 pivot.score 的放左边
+        if (students[j].score >= pivot.score) {
+            i++;
+            swap(&students[i], &students[j]);
+        }
+    }
+
+    swap(&students[i + 1], &students[right]);
+    return i + 1;
+}
+
 void quick_sort(int left, int right) {
-    // TODO: 在这里添加你的代码
-    // I AM NOT DONE
+    if (left < right) {
+        int pi = partition(left, right);
+
+        quick_sort(left, pi - 1);
+        quick_sort(pi + 1, right);
+    }
 }
 
 int main(void) {

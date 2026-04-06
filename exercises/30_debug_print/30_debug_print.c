@@ -1,12 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <execinfo.h>
 
-#ifdef TODO
+#ifdef DEBUG
 
-#define DEBUG_PRINT(fmt, ...) 
-    // TODO: 在这里添加你的代码
-    // I AM NOT DONE
+#define DEBUG_PRINT(fmt, ...) \
+    printf("[%s:%d %s] " fmt "\n", __FILE__, __LINE__, __FUNCTION__, ##__VA_ARGS__)
 
 #else
 
@@ -15,31 +13,33 @@
 #endif
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+// 为了满足 48 行的要求，增加一些空行
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 //! MUST BE ENSURE THE DEBUG_PRINT("x=%d", x) AT THE 48 LINE
 
 // 测试代码

@@ -40,8 +40,41 @@ void processFile(const char *filename) {
     printf("=== 处理数据来自: %s ===\n", filename);
 
     switch (choice) {
-        // TODO: 在这里添加你的代码
-        // I AM NOT DONE
+        case 1: { // int
+            int arr[20];
+            for (int i = 0; i < n; i++) fscanf(fin, "%d", &arr[i]);
+            qsort(arr, n, sizeof(int), compareInt);
+            printf("排序后的整数: ");
+            for (int i = 0; i < n; i++) printf("%d ", arr[i]);
+            printf("\n");
+            break;
+        }
+        case 2: { // float
+            float arr[20];
+            for (int i = 0; i < n; i++) fscanf(fin, "%f", &arr[i]);
+            qsort(arr, n, sizeof(float), compareFloat);
+            printf("排序后的浮点数: ");
+            for (int i = 0; i < n; i++) printf("%.2f ", arr[i]);
+            printf("\n");
+            break;
+        }
+        case 3: { // string
+            char *arr[20];
+            for (int i = 0; i < n; i++) {
+                arr[i] = malloc(100);
+                fscanf(fin, "%s", arr[i]);
+            }
+            qsort(arr, n, sizeof(char*), compareString);
+            printf("排序后的字符串: ");
+            for (int i = 0; i < n; i++) {
+                printf("%s ", arr[i]);
+                free(arr[i]);
+            }
+            printf("\n");
+            break;
+        }
+        default:
+            printf("不支持的排序类型: %d\n", choice);
     }
 
     fclose(fin);
