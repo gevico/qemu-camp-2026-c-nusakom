@@ -6,7 +6,7 @@
 #define TABLE_SIZE 1024
 
 typedef struct HashNode {
-    char *word;
+    char word[128];
     int count;
     struct HashNode *next;
 } HashNode;
@@ -42,8 +42,8 @@ void hash_insert(HashTable *ht, const char *word) {
     }
     HashNode *n = malloc(sizeof(HashNode));
     if (!n) return;
-    n->word = strdup(word);
-    if (!n->word) { free(n); return; }
+    strncpy(n->word, word, sizeof(n->word) - 1);
+    n->word[sizeof(n->word) - 1] = '\0';
     n->count = 1;
     n->next = ht->table[h];
     ht->table[h] = n;
@@ -56,7 +56,6 @@ void free_hash_table(HashTable *ht) {
         while (node) {
             HashNode *tmp = node;
             node = node->next;
-            free(tmp->word);
             free(tmp);
         }
     }
