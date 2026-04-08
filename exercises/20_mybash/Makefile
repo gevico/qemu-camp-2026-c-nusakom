@@ -1,39 +1,47 @@
-PWD := $(shell pwd)
+PWD     := $(shell pwd)
+CC      := gcc
+CFLAGS  := -Wall -I$(PWD)/include
+OBJDIR  := $(PWD)/obj
+BINDIR  := $(PWD)/bin
 
-CC = gcc
-INC = -I$(PWD)/include
+SUBDIRS := mysed myfile mywc mytrans
 
-OBJDIR := $(PWD)/obj
-BINDIR := $(PWD)/bin
+# 每个子模块的库路径
+LIB_mysed   := $(OBJDIR)/libmysed.a
+LIB_myfile  := $(OBJDIR)/libmyfile.a
+LIB_mywc    := $(OBJDIR)/libmywc.a
+LIB_mytrans := $(OBJDIR)/libmytrans.a
+ALL_LIBS    := $(LIB_mysed) $(LIB_myfile) $(LIB_mywc) $(LIB_mytrans)
 
-.PHONY: all mysed myfile mywc mytrans mybash clean
+# 传给子模块的链接命令（顶层统一管理）
+LINKCMD := $(CC) -o $(BINDIR)/mybash $(OBJDIR)/mybash/main.o \
+	-L$(OBJDIR) -lmysed -lmywc -lmytrans -lmyfile
+
+.PHONY: all $(SUBDIRS) mybash clean
 
 all: mybash
 
-mysed:
-	@mkdir -p $(OBJDIR)/mysed
-	$(CC) -Wall $(INC) -I$(PWD)/src/mysed -c src/mysed/mysed.c -o $(OBJDIR)/mysed/mysed.o
-	ar rcs $(OBJDIR)/libmysed.a $(OBJDIR)/mysed/mysed.o
+# 构建各子模块静态库
+$(LIB_mysed):
+	@mkdir -p $(OBJDIR)
+	$(MAKE) -C src/mysed OBJDIR=$(OBJDIR) CC=$(CC) CFLAGS="$(CFLAGS) -I$(PWD)/src/mysed"
 
-myfile:
-	@mkdir -p $(OBJDIR)/myfile
-	$(CC) -Wall $(INC) -I$(PWD)/src/myfile -c src/myfile/myfile.c -o $(OBJDIR)/myfile/myfile.o
-	ar rcs $(OBJDIR)/libmyfile.a $(OBJDIR)/myfile/myfile.o
+$(LIB_myfile):
+	@mkdir -p $(OBJDIR)
+	$(MAKE) -C src/myfile OBJDIR=$(OBJDIR) CC=$(CC) CFLAGS="$(CFLAGS) -I$(PWD)/src/myfile"
 
-mywc:
-	@mkdir -p $(OBJDIR)/mywc
-	$(CC) -Wall $(INC) -I$(PWD)/src/mywc -c src/mywc/mywc.c -o $(OBJDIR)/mywc/mywc.o
-	ar rcs $(OBJDIR)/libmywc.a $(OBJDIR)/mywc/mywc.o
+$(LIB_mywc):
+	@mkdir -p $(OBJDIR)
+	$(MAKE) -C src/mywc OBJDIR=$(OBJDIR) CC=$(CC) CFLAGS="$(CFLAGS) -I$(PWD)/src/mywc"
 
-mytrans:
-	@mkdir -p $(OBJDIR)/mytrans
-	$(CC) -Wall $(INC) -I$(PWD)/src/mytrans -c src/mytrans/myhash.c -o $(OBJDIR)/mytrans/myhash.o
-	$(CC) -Wall $(INC) -I$(PWD)/src/mytrans -c src/mytrans/mytrans.c -o $(OBJDIR)/mytrans/mytrans.o
-	ar rcs $(OBJDIR)/libmytrans.a $(OBJDIR)/mytrans/mytrans.o $(OBJDIR)/mytrans/myhash.o
+$(LIB_mytrans):
+	@mkdir -p $(OBJDIR)
+	$(MAKE) -C src/mytrans OBJDIR=$(OBJDIR) CC=$(CC) CFLAGS="$(CFLAGS) -I$(PWD)/src/mytrans"
 
-mybash: mysed myfile mywc mytrans
+# 构建 mybash 可执行文件
+mybash: $(ALL_LIBS)
 	@mkdir -p $(OBJDIR)/mybash $(BINDIR)
-	$(CC) -Wall $(INC) -c src/mybash/main.c -o $(OBJDIR)/mybash/main.o
+	$(CC) $(CFLAGS) -c src/mybash/main.c -o $(OBJDIR)/mybash/main.o
 	$(CC) -o $(BINDIR)/mybash $(OBJDIR)/mybash/main.o \
 		-L$(OBJDIR) -lmysed -lmywc -lmytrans -lmyfile
 	cp $(BINDIR)/mybash ./mybash
