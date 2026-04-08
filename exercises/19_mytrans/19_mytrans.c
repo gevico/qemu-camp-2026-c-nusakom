@@ -1,206 +1,96 @@
+#include "myhash.h"
+#include <ctype.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 
-#define TABLE_SIZE 1024  // 哈希表大小
-
-// 哈希表节点结构
-typedef struct HashNode {
-    char *word;
-    int count;
-    struct HashNode *next;
-} HashNode;
-
-// 哈希表结构
-typedef struct {
-    HashNode **table;
-    int size;
-} HashTable;
-
-// djb2哈希函数
-unsigned long djb2_hash(const char *str) {
-    unsigned long hash = 5381;
-    int c;
-    while ((c = (unsigned char)*str++))
-        hash = ((hash << 5) + hash) + c;
-    return hash;
+void trim(char *str) {
+    int len = strlen(str);
+    while (len > 0 && (str[len-1] == '\n' || str[len-1] == '\r' || str[len-1] == ' '))
+        str[--len] = '\0';
 }
 
-// 创建哈希表
-HashTable *create_hash_table(int size) {
-    HashTable *ht = malloc(sizeof(HashTable));
-    if (!ht) return NULL;
-    ht->table = calloc(size, sizeof(HashNode *));
-    if (!ht->table) {
-        free(ht);
-        return NULL;
+int load_dictionary(const char *filename, HashTable *table, uint64_t *dict_count) {
+    FILE *file = fopen(filename, "r");
+    if (!file) {
+        perror("无法打开词典文件");
+        return -1;
     }
-    ht->size = size;
-    return ht;
-}
 
-// 向哈希表中插入单词
-void hash_table_insert(HashTable *ht, const char *word) {
-    unsigned long hash = djb2_hash(word) % ht->size;
+    char line[1024];
+    char current_word[256] = {0};
+    int in_entry = 0;
 
-    HashNode *node = ht->table[hash];
-    while (node) {
-        if (strcmp(node->word, word) == 0) {
-            node->count++;
-            return;
-        }
-        node = node->next;
-    }
-    HashNode *new_node = malloc(sizeof(HashNode));
-    if (!new_node) return; // 内存分配失败处理
-    new_node->word = strdup(word);
-    if (!new_node->word) {
-        free(new_node);
-        return;
-    }
-    new_node->count = 1;
-    new_node->next = ht->table[hash];
-    ht->table[hash] = new_node;
-}
-
-// 从哈希表中获取所有单词及其计数
-// 注意：调用者必须确保 nodes 数组足够大
-void get_all_words(HashTable *ht, HashNode **nodes, int *count) {
-    *count = 0;
-    for (int i = 0; i < ht->size; i++) {
-        HashNode *node = ht->table[i];
-        while (node) {
-            nodes[(*count)++] = node;
-            node = node->next;
+    while (fgets(line, sizeof(line), file)) {
+        trim(line);
+        if (line[0] == '#') {
+            strncpy(current_word, line + 1, sizeof(current_word) - 1);
+            in_entry = 1;
+        } else if (in_entry && strncmp(line, "Trans:", 6) == 0) {
+            hash_table_insert(table, current_word, line + 6);
+            if (dict_count) (*dict_count)++;
+            in_entry = 0;
         }
     }
+
+    fclose(file);
+    return 0;
 }
 
-// 比较函数用于排序
-int compare_nodes(const void *a, const void *b) {
-    HashNode *node_a = *(HashNode **)a;
-    HashNode *node_b = *(HashNode **)b;
-    
-    // 先按计数降序，再按字母升序
-    if (node_b->count != node_a->count)
-        return node_b->count - node_a->count;
-    return strcmp(node_a->word, node_b->word);
-}
-
-// 释放哈希表内存
-void free_hash_table(HashTable *ht) {
-    if (!ht) return;
-    for (int i = 0; i < ht->size; i++) {
-        HashNode *node = ht->table[i];
-        while (node != NULL) {
-            HashNode *temp = node;
-            node = node->next;
-            free(temp->word);
-            free(temp);
-        }
-    }
-    free(ht->table);
-    free(ht);
-}
-
-// 从字符串中获取下一个单词
-char *get_next_word(const char **text) {
-    const char *p = *text;
-    // 跳过非字母字符
-    while (*p && !isalpha((unsigned char)*p)) p++;
-    if (!*p) { 
-        *text = p; 
-        return NULL; 
-    }
-    const char *start = p;
-    while (*p && isalpha((unsigned char)*p)) p++;
-    int len = p - start;
-    char *word = malloc(len + 1);
-    if (!word) return NULL;
-    strncpy(word, start, len);
-    word[len] = '\0';
-    // 转小写
-    for (int i = 0; i < len; i++) word[i] = tolower((unsigned char)word[i]);
-    *text = p;
-    return word;
+void to_lowercase(char *str) {
+    for (; *str; ++str)
+        *str = tolower((unsigned char)*str);
 }
 
 int main(int argc, char *argv[]) {
-    const char* file_path = "paper.txt";
+    const char *dict_path = "./dict.txt";
+    const char *input_path = "./text.txt";
 
-    FILE *file = fopen(file_path, "r");
-    if (file == NULL) {
-        perror("无法打开文件");
+    HashTable *table = create_hash_table();
+    if (!table) {
+        fprintf(stderr, "无法创建哈希表\n");
         return 1;
     }
 
-    HashTable *ht = create_hash_table(TABLE_SIZE);
-    if (!ht) {
-        fclose(file);
+    uint64_t dict_count = 0;
+    if (load_dictionary(dict_path, table, &dict_count) != 0) {
+        fprintf(stderr, "加载词典失败，请确保 dict.txt 存在。\n");
+        free_hash_table(table);
         return 1;
     }
 
-    char buffer[4096];
-    
-    // 从文件读取直到EOF
-    while (fgets(buffer, sizeof(buffer), file) != NULL) {
-        const char *ptr = buffer;
-        char *word;
-        
-        while ((word = get_next_word(&ptr)) != NULL) {
-            hash_table_insert(ht, word);
-            free(word);
+    FILE *file = fopen(input_path, "r");
+    if (!file) {
+        fprintf(stderr, "无法打开输入文件: %s\n", input_path);
+        free_hash_table(table);
+        return 1;
+    }
+
+    char line[1024];
+    while (fgets(line, sizeof(line), file)) {
+        line[strcspn(line, "\n")] = '\0';
+        if (strlen(line) == 0) continue;
+
+        char *word = strtok(line, " \t");
+        while (word != NULL) {
+            char lower_word[256];
+            strncpy(lower_word, word, sizeof(lower_word) - 1);
+            lower_word[sizeof(lower_word) - 1] = '\0';
+            to_lowercase(lower_word);
+
+            const char *translation = hash_table_lookup(table, lower_word);
+            printf("原文: %s\t", word);
+            if (translation) {
+                printf("翻译: %s\n", translation);
+            } else {
+                printf("未找到该单词的翻译。\n");
+            }
+            word = strtok(NULL, " \t");
         }
     }
-    
+
     fclose(file);
-    
-    // 【关键修复】先统计总节点数，再分配内存
-    int total_nodes = 0;
-    for (int i = 0; i < ht->size; i++) {
-        HashNode *node = ht->table[i];
-        while (node) {
-            total_nodes++;
-            node = node->next;
-        }
-    }
-
-    HashNode **nodes = NULL;
-    if (total_nodes > 0) {
-        nodes = malloc(total_nodes * sizeof(HashNode *));
-        if (!nodes) {
-            fprintf(stderr, "Memory allocation failed for nodes array\n");
-            free_hash_table(ht);
-            return 1;
-        }
-    } else {
-        // 没有单词，直接输出空结果
-        printf("\n单词统计结果（按频率降序排列）:\n");
-        printf("%-20s %s\n", "单词", "出现次数");
-        printf("-------------------- ----------\n");
-        free_hash_table(ht);
-        return 0;
-    }
-
-    // 收集所有单词节点
-    int node_count = 0;
-    get_all_words(ht, nodes, &node_count);
-    
-    // 排序
-    qsort(nodes, node_count, sizeof(HashNode *), compare_nodes);
-    
-    // 输出结果
-    printf("\n单词统计结果（按频率降序排列）:\n");
-    printf("%-20s %s\n", "单词", "出现次数");
-    printf("-------------------- ----------\n");
-    for (int i = 0; i < node_count; i++) {
-        printf("%-20s %d\n", nodes[i]->word, nodes[i]->count); // 增加对齐格式化
-    }
-    
-    // 释放内存
-    free(nodes);
-    free_hash_table(ht);
-    
+    free_hash_table(table);
     return 0;
 }

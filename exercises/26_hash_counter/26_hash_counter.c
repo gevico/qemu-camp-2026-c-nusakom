@@ -127,7 +127,7 @@ char *get_next_word(const char **text) {
 }
 
 int main(int argc, char *argv[]) {
-    const char* file_path = "paper.txt";
+    const char* file_path = "./paper.txt";
 
     FILE *file = fopen(file_path, "r");
     if (file == NULL) {
@@ -195,7 +195,7 @@ int main(int argc, char *argv[]) {
     printf("%-20s %s\n", "单词", "出现次数");
     printf("-------------------- ----------\n");
     for (int i = 0; i < node_count; i++) {
-        printf("%-20s %d\n", nodes[i]->word, nodes[i]->count); // 增加对齐格式化
+        printf("%s:%d\n", nodes[i]->word, nodes[i]->count);
     }
     
     // 释放内存

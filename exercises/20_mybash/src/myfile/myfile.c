@@ -38,7 +38,23 @@ int __cmd_myfile(const char* filename) {
     fflush(stdout);
     printf("filepath: %s\n", filepath);
 
-    // TODO: 在这里添加你的代码
+    fd = open(filepath, O_RDONLY);
+    if (fd < 0) {
+        fprintf(stderr, "无法打开文件: %s\n", filepath);
+        return 1;
+    }
+
+    if (read(fd, &ehdr, sizeof(ehdr)) != sizeof(ehdr)) {
+        fprintf(stderr, "读取 ELF 头失败\n");
+        close(fd);
+        return 1;
+    }
+
+    if (memcmp(ehdr.e_ident, ELFMAG, SELFMAG) != 0) {
+        fprintf(stderr, "不是有效的 ELF 文件: %s\n", filepath);
+        close(fd);
+        return 1;
+    }
 
     print_elf_type(ehdr.e_type);
     close(fd);

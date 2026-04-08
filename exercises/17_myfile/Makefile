@@ -7,7 +7,9 @@ OBJS := $(SRCS:.c=.o)
 
 all: $(TARGET)
 
-# TODO: 在这里添加你的代码
+$(TARGET): $(SRCS)
+	$(CC) $(CFLAGS) -o $(TARGET) $(SRCS)
+	$(CC) $(CFLAGS) -c -o $(TARGET).o $(SRCS)
 
 
 clean:

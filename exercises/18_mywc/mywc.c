@@ -48,7 +48,7 @@ void print_word_counts(WordCount **hash_table) {
     for (int i = 0; i < HASH_SIZE; i++) {
         WordCount *node = hash_table[i];
         while (node) {
-            printf("%s: %d\n", node->word, node->count);
+            printf("%-21s%d\n", node->word, node->count);
             node = node->next;
         }
     }

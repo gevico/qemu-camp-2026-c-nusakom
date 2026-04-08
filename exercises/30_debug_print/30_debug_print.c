@@ -45,8 +45,6 @@
 // padding line 44
 // padding line 45
 // padding line 46
-// padding line 47
-// 第48行（必须精确）
 void test() { int x = 42; DEBUG_PRINT("x=%d", x); }
 
 int main() {
