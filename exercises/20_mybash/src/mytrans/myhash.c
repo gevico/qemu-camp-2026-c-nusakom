@@ -56,13 +56,34 @@ int hash_table_insert(HashTable *table, const char *key, const char *value) {
   unsigned long hash = hash_function(key) % HASH_TABLE_SIZE;
   HashNode *node = table->buckets[hash];
 
+  // 检查是否已存在该键
   while (node) {
-    if (strcmp(node->key, key) == 0) return 1;
+    if (strcmp(node->key, key) == 0) {
+      // 键已存在，更新值
+      free(node->value);
+      node->value = strdup(value);
+      return 1;
+    }
     node = node->next;
   }
-  HashNode *new_node = malloc(sizeof(HashNode));
+
+  // 键不存在，创建新节点
+  HashNode *new_node = (HashNode *)malloc(sizeof(HashNode));
+  if (!new_node) {
+    return 0;
+  }
+
+  // 复制键和值
   new_node->key = strdup(key);
   new_node->value = strdup(value);
+  if (!new_node->key || !new_node->value) {
+    free(new_node->key);
+    free(new_node->value);
+    free(new_node);
+    return 0;
+  }
+
+  // 插入到链表头部
   new_node->next = table->buckets[hash];
   table->buckets[hash] = new_node;
 
@@ -77,8 +98,11 @@ const char *hash_table_lookup(HashTable *table, const char *key) {
   unsigned long hash = hash_function(key) % HASH_TABLE_SIZE;
   HashNode *node = table->buckets[hash];
 
+  // 在链表中查找键
   while (node) {
-    if (strcmp(node->key, key) == 0) return node->value;
+    if (strcmp(node->key, key) == 0) {
+      return node->value; // 找到键，返回对应的值
+    }
     node = node->next;
   }
 
