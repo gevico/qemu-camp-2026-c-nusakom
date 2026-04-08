@@ -4,27 +4,44 @@
 #include <string.h>
 
 int parse_replace_command(const char* cmd, char** old_str, char** new_str) {
-    // 检查输入参数有效性
-    if (!cmd || !old_str || !new_str) {
-        return -1;
-    }
-    
-    // 初始化输出参数
+    if (!cmd || !old_str || !new_str) return -1;
     *old_str = NULL;
     *new_str = NULL;
-    
-    // TODO: 在这里添加你的代码
+
+    /* 期望格式: s/old/new/ */
+    if (cmd[0] != 's' || cmd[1] != '/') return -1;
+    const char *p = cmd + 2;
+    const char *slash = strchr(p, '/');
+    if (!slash) return -1;
+
+    int old_len = slash - p;
+    *old_str = malloc(old_len + 1);
+    if (!*old_str) return -1;
+    strncpy(*old_str, p, old_len);
+    (*old_str)[old_len] = '\0';
+
+    p = slash + 1;
+    slash = strchr(p, '/');
+    int new_len = slash ? (int)(slash - p) : (int)strlen(p);
+    *new_str = malloc(new_len + 1);
+    if (!*new_str) { free(*old_str); *old_str = NULL; return -1; }
+    strncpy(*new_str, p, new_len);
+    (*new_str)[new_len] = '\0';
 
     return 0;
 }
 
 void replace_first_occurrence(char* str, const char* old, const char* new) {
-    // 检查输入参数有效性
-    if (!str || !old || !new) {
-        return;
-    }
-    
-    // TODO: 在这里添加你的代码
+    if (!str || !old || !new) return;
+    char *pos = strstr(str, old);
+    if (!pos) return;
+
+    int old_len = strlen(old);
+    int new_len = strlen(new);
+    int str_len = strlen(str);
+
+    memmove(pos + new_len, pos + old_len, str_len - (pos - str) - old_len + 1);
+    memcpy(pos, new, new_len);
 }
 
 int __cmd_mysed(const char* rules, const char* str) {
