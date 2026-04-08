@@ -3,141 +3,185 @@
 #include <string.h>
 #include <ctype.h>
 
-#define TABLE_SIZE 1024
+#define TABLE_SIZE 1024  // 哈希表大小
 
+// 哈希表节点结构
 typedef struct HashNode {
-    char word[128];
+    char *word;
     int count;
     struct HashNode *next;
 } HashNode;
 
+// 哈希表结构
 typedef struct {
     HashNode **table;
     int size;
 } HashTable;
 
+// djb2哈希函数
 unsigned long djb2_hash(const char *str) {
     unsigned long hash = 5381;
     int c;
-    while ((c = (unsigned char)*str++))
-        hash = ((hash << 5) + hash) + c;
+    
+    while ((c = *str++)) {
+        hash = ((hash << 5) + hash) + c; // hash * 33 + c
+    }
+    
     return hash;
 }
 
+// 创建哈希表
 HashTable *create_hash_table(int size) {
     HashTable *ht = malloc(sizeof(HashTable));
-    if (!ht) return NULL;
     ht->table = calloc(size, sizeof(HashNode *));
-    if (!ht->table) { free(ht); return NULL; }
     ht->size = size;
     return ht;
 }
 
-void hash_insert(HashTable *ht, const char *word) {
-    unsigned long h = djb2_hash(word) % ht->size;
-    HashNode *node = ht->table[h];
-    while (node) {
-        if (strcmp(node->word, word) == 0) { node->count++; return; }
-        node = node->next;
+// 向哈希表中插入单词
+void hash_table_insert(HashTable *ht, const char *word) {
+    unsigned long hash = djb2_hash(word) % ht->size;
+
+    HashNode *current = ht->table[hash];
+    
+    // 检查单词是否已存在
+    while (current != NULL) {
+        if (strcmp(current->word, word) == 0) {
+            current->count++;
+            return;
+        }
+        current = current->next;
     }
-    HashNode *n = malloc(sizeof(HashNode));
-    if (!n) return;
-    strncpy(n->word, word, sizeof(n->word) - 1);
-    n->word[sizeof(n->word) - 1] = '\0';
-    n->count = 1;
-    n->next = ht->table[h];
-    ht->table[h] = n;
+    
+    // 单词不存在，创建新节点
+    HashNode *new_node = malloc(sizeof(HashNode));
+    new_node->word = malloc(strlen(word) + 1);
+    strcpy(new_node->word, word);
+    new_node->count = 1;
+    new_node->next = ht->table[hash];
+    ht->table[hash] = new_node;
 }
 
+// 从哈希表中获取所有单词及其计数
+void get_all_words(HashTable *ht, HashNode **nodes, int *count) {
+    *count = 0;
+    
+    for (int i = 0; i < ht->size; i++) {
+        HashNode *current = ht->table[i];
+        while (current != NULL) {
+            nodes[*count] = current;
+            (*count)++;
+            current = current->next;
+        }
+    }
+}
+
+// 比较函数用于排序
+int compare_nodes(const void *a, const void *b) {
+    HashNode *node_a = *(HashNode **)a;
+    HashNode *node_b = *(HashNode **)b;
+    
+    // 先按计数降序
+    if (node_a->count != node_b->count) {
+        return node_b->count - node_a->count;
+    }
+    // 再按字母升序
+    return strcmp(node_a->word, node_b->word);
+}
+
+// 释放哈希表内存
 void free_hash_table(HashTable *ht) {
-    if (!ht) return;
     for (int i = 0; i < ht->size; i++) {
         HashNode *node = ht->table[i];
-        while (node) {
-            HashNode *tmp = node;
+        while (node != NULL) {
+            HashNode *temp = node;
             node = node->next;
-            free(tmp);
+            free(temp->word);
+            free(temp);
         }
     }
     free(ht->table);
     free(ht);
 }
 
-int compare_nodes(const void *a, const void *b) {
-    HashNode *na = *(HashNode **)a;
-    HashNode *nb = *(HashNode **)b;
-    if (nb->count != na->count) return nb->count - na->count;
-    return strcmp(na->word, nb->word);
-}
-
-void process_text(HashTable *ht, const char *text) {
-    const char *p = text;
-    while (*p) {
-        while (*p && !isalpha((unsigned char)*p)) p++;
-        if (!*p) break;
-        const char *start = p;
-        while (*p && isalpha((unsigned char)*p)) p++;
-        int len = p - start;
-        char word[256];
-        if (len >= 256) len = 255;
-        strncpy(word, start, len);
-        word[len] = '\0';
-        for (int i = 0; i < len; i++) word[i] = tolower((unsigned char)word[i]);
-        hash_insert(ht, word);
+// 从字符串中获取下一个单词
+char *get_next_word(const char **text) {
+    // 跳过非字母字符
+    while (**text && !isalpha(**text)) {
+        (*text)++;
     }
+    
+    if (!**text) {
+        return NULL;
+    }
+    
+    const char *start = *text;
+    
+    // 收集字母字符
+    while (**text && isalpha(**text)) {
+        (*text)++;
+    }
+    
+    int length = *text - start;
+    char *word = malloc(length + 1);
+    strncpy(word, start, length);
+    word[length] = '\0';
+    
+    // 转换为小写
+    for (int i = 0; i < length; i++) {
+        word[i] = tolower(word[i]);
+    }
+    
+    return word;
 }
 
-int main(void) {
-    /* 先尝试读文件，失败则用内置文本 */
-    const char *builtin_text =
-        "the quick brown fox jumps over the lazy dog. the fox is very quick and the dog is very lazy. "
-        "quick brown fox runs fast but the lazy dog sleeps all day. the fox jumps over the dog again and again. "
-        "the quick fox and the lazy dog are good friends. the fox is quick, the dog is lazy, but they play together. "
-        "quick brown fox jumps over the lazy dog every morning. the dog sleeps and the fox plays. "
-        "the quick fox runs quickly while the lazy dog rests. the fox is always quick, the dog is always lazy. "
-        "brown fox and lazy dog live in a small house. the house is small but comfortable for the fox and the dog. "
-        "quick fox jumps over the lazy dog one more time. the dog wakes up and looks at the quick fox. "
-        "the brown fox is very quick and very smart. the lazy dog is slow but very friendly. "
-        "fox and dog play together every day. quick fox, lazy dog, they are happy together. "
-        "the end of the story about the quick brown fox and the lazy dog.";
+int main(int argc, char *argv[]) {
+    const char* file_path = "paper.txt";
+
+    FILE *file = fopen(file_path, "r");
+    if (file == NULL) {
+        perror("无法打开文件");
+        return 1;
+    }
 
     HashTable *ht = create_hash_table(TABLE_SIZE);
-    if (!ht) return 1;
-
-    FILE *file = fopen("./paper.txt", "r");
-    if (file) {
-        char buf[4096];
-        while (fgets(buf, sizeof(buf), file))
-            process_text(ht, buf);
-        fclose(file);
-    } else {
-        process_text(ht, builtin_text);
+    char buffer[4096];
+    
+    printf("正在读取文件: %s\n", file_path);
+    
+    // 从文件读取直到EOF
+    while (fgets(buffer, sizeof(buffer), file) != NULL) {
+        const char *ptr = buffer;
+        char *word;
+        
+        while ((word = get_next_word(&ptr)) != NULL) {
+            hash_table_insert(ht, word);
+            free(word);
+        }
     }
-
-    /* 统计节点数 */
-    int total = 0;
-    for (int i = 0; i < ht->size; i++) {
-        HashNode *n = ht->table[i];
-        while (n) { total++; n = n->next; }
+    
+    fclose(file);
+    
+    // 收集所有单词节点
+    HashNode **nodes = malloc(TABLE_SIZE * sizeof(HashNode *));
+    int node_count = 0;
+    get_all_words(ht, nodes, &node_count);
+    
+    // 排序
+    qsort(nodes, node_count, sizeof(HashNode *), compare_nodes);
+    
+    // 输出结果
+    printf("\n单词统计结果（按频率降序排列）:\n");
+    printf("%-20s %s\n", "单词", "出现次数");
+    printf("-------------------- ----------\n");
+    for (int i = 0; i < node_count; i++) {
+        printf("%s:%d ", nodes[i]->word, nodes[i]->count);
     }
-
-    if (total == 0) { free_hash_table(ht); return 0; }
-
-    HashNode **nodes = malloc(total * sizeof(HashNode *));
-    if (!nodes) { free_hash_table(ht); return 1; }
-
-    int cnt = 0;
-    for (int i = 0; i < ht->size; i++) {
-        HashNode *n = ht->table[i];
-        while (n) { nodes[cnt++] = n; n = n->next; }
-    }
-
-    qsort(nodes, cnt, sizeof(HashNode *), compare_nodes);
-
-    for (int i = 0; i < cnt; i++)
-        printf("%s:%d\n", nodes[i]->word, nodes[i]->count);
-
+    printf("\n");
+    
+    // 释放内存
     free(nodes);
     free_hash_table(ht);
+    
     return 0;
 }

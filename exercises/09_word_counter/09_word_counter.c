@@ -1,20 +1,18 @@
 #include <stdio.h>
-#include <ctype.h>
-#include <stdbool.h>
 
 int main() {
     char str[]="Don't ask what your country can do for you, but ask what you can do for your country.";
     int wordCount = 0;
-    bool inWord = false;
-
+    int inWord = 0;
+    
     for (int i = 0; str[i] != '\0'; i++) {
-        if (isalnum(str[i]) || str[i] == '\'') {
+        if (str[i] != ' ' && str[i] != ',' && str[i] != '.') {
             if (!inWord) {
                 wordCount++;
-                inWord = true;
+                inWord = 1;
             }
         } else {
-            inWord = false;
+            inWord = 0;
         }
     }
     

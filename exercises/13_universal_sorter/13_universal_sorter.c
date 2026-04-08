@@ -17,19 +17,8 @@ int compareString(const void *a, const void *b) {
     return strcmp(*(char**)a, *(char**)b);
 }
 
-void universal_sort(void *base, int n, int size, int (*compare)(const void *, const void *)) {
-    char *p = (char *)base;
-    char *temp = (char *)malloc(size);
-    for (int i = 0; i < n - 1; i++) {
-        for (int j = 0; j < n - 1 - i; j++) {
-            if (compare(p + j * size, p + (j + 1) * size) > 0) {
-                memcpy(temp, p + j * size, size);
-                memcpy(p + j * size, p + (j + 1) * size, size);
-                memcpy(p + (j + 1) * size, temp, size);
-            }
-        }
-    }
-    free(temp);
+void sort(void *array, size_t n, size_t size, CompareFunc compare) {
+    qsort(array, n, size, compare);
 }
 
 void processFile(const char *filename) {
@@ -51,26 +40,50 @@ void processFile(const char *filename) {
     printf("=== 处理数据来自: %s ===\n", filename);
 
     switch (choice) {
-        case 1: {
-            int arr[20];
-            for (int i = 0; i < n; i++) fscanf(fin, "%d", &arr[i]);
-            universal_sort(arr, n, sizeof(int), compareInt);
-            printf("整数排序结果: ");
-            for (int i = 0; i < n; i++) printf("%d ", arr[i]);
+        case 1: { // 整数排序
+            int intArray[20];
+            for (int i = 0; i < n; i++) {
+                fscanf(fin, "%d", &intArray[i]);
+            }
+            sort(intArray, n, sizeof(int), compareInt);
+            printf("排序后的整数: ");
+            for (int i = 0; i < n; i++) {
+                printf("%d ", intArray[i]);
+            }
             printf("\n");
             break;
         }
-        case 2: {
-            float arr[20];
-            for (int i = 0; i < n; i++) fscanf(fin, "%f", &arr[i]);
-            universal_sort(arr, n, sizeof(float), compareFloat);
-            printf("浮点数排序结果: ");
-            for (int i = 0; i < n; i++) printf("%.2f ", arr[i]);
+        case 2: { // 浮点数排序
+            float floatArray[20];
+            for (int i = 0; i < n; i++) {
+                fscanf(fin, "%f", &floatArray[i]);
+            }
+            sort(floatArray, n, sizeof(float), compareFloat);
+            printf("排序后的浮点数: ");
+            for (int i = 0; i < n; i++) {
+                printf("%f ", floatArray[i]);
+            }
+            printf("\n");
+            break;
+        }
+        case 3: { // 字符串排序
+            char *stringArray[20];
+            char buffer[100];
+            for (int i = 0; i < n; i++) {
+                fscanf(fin, "%s", buffer);
+                stringArray[i] = strdup(buffer);
+            }
+            sort(stringArray, n, sizeof(char*), compareString);
+            printf("排序后的字符串: ");
+            for (int i = 0; i < n; i++) {
+                printf("%s ", stringArray[i]);
+                free(stringArray[i]);
+            }
             printf("\n");
             break;
         }
         default:
-            printf("错误: 未知类型 %d\n", choice);
+            printf("错误: 未知的排序类型 %d\n", choice);
             break;
     }
 

@@ -11,7 +11,7 @@ void insertion_sort(Student students[], int n) {
     for (int i = 1; i < n; i++) {
         Student key = students[i];
         int j = i - 1;
-        // 按成绩从高到低排序
+        
         while (j >= 0 && students[j].score < key.score) {
             students[j + 1] = students[j];
             j--;

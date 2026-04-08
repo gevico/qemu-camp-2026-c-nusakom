@@ -11,26 +11,47 @@
 /* 判断字符 c 是否在分隔符集合 delim 中 */
 static int is_delim(char c, const char *delim) {
     while (*delim) {
-        if (c == *delim) return 1;
-        delim++;
+        if (c == *delim++) {
+            return 1;
+        }
     }
     return 0;
 }
 
 /* 线程安全版本：通过 saveptr 维护调用状态，不使用静态变量 */
-char *my_strtok_r(char *str, const char *delim, char **saveptr) {
-    char *p = str ? str : *saveptr;
-    if (!p) return NULL;
-
-    /* 跳过前导分隔符 */
-    while (*p && is_delim(*p, delim)) p++;
-    if (!*p) { *saveptr = NULL; return NULL; }
-
-    char *token = p;
-    while (*p && !is_delim(*p, delim)) p++;
-    if (*p) { *p = '\0'; p++; }
-    *saveptr = p;
-    return token;
+char *strtok_r(char *str, const char *delim, char **saveptr) {
+    char *start, *end;
+    
+    // 第一次调用时，使用传入的 str
+    // 后续调用时，使用 saveptr 保存的位置
+    start = str ? str : *saveptr;
+    
+    // 跳过开头的分隔符
+    while (*start && is_delim(*start, delim)) {
+        start++;
+    }
+    
+    // 如果已经到达字符串末尾，返回 NULL
+    if (!*start) {
+        *saveptr = start;
+        return NULL;
+    }
+    
+    // 找到当前 token 的结束位置
+    end = start + 1;
+    while (*end && !is_delim(*end, delim)) {
+        end++;
+    }
+    
+    // 如果不是字符串末尾，将结束位置设置为 '\0'，并保存下一次的起始位置
+    if (*end) {
+        *end = '\0';
+        *saveptr = end + 1;
+    } else {
+        *saveptr = end;
+    }
+    
+    return start;
 }
 
 int main(void) {
@@ -38,10 +59,10 @@ int main(void) {
     const char *delim = ", ";
     char *save = NULL;
 
-    char *tok = my_strtok_r(buf, delim, &save);
+    char *tok = strtok_r(buf, delim, &save);
     while (tok) {
         printf("%s\n", tok);
-        tok = my_strtok_r(NULL, delim, &save);
+        tok = strtok_r(NULL, delim, &save);
     }
     return 0;
 }

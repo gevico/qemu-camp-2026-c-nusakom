@@ -33,6 +33,9 @@ void register_event(enum EVENT_TYPE type, void (*callback)(void*), void* arg) {
     }
 }
 
+/*
+ * 触发事件函数：若已注册回调则调用
+ */
 void trigger_event(enum EVENT_TYPE type) {
     if (type < EVENT_MAX && g_callbacks[type]) {
         g_callbacks[type](g_callback_args[type]);

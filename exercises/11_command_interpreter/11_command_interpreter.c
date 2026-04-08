@@ -56,34 +56,60 @@ int main(void)
 int shell_parse(char *buf, char *argv[])
 {
     int argc = 0;
-    int state = 0; // 0: 寻找参数起始, 1: 正在解析普通参数, 2: 正在解析引号内参数
-    char *p = buf;
-
-    while (*p != '\0') {
-        if (state == 0) {
-            if (*p == ' ' || *p == '\t') {
-                // 跳过空白
-            } else if (*p == '"') {
-                state = 2;
-                argv[argc++] = p + 1;
-            } else {
-                state = 1;
-                argv[argc++] = p;
-            }
-        } else if (state == 1) {
-            if (*p == ' ' || *p == '\t') {
-                *p = '\0';
-                state = 0;
-            }
-        } else if (state == 2) {
-            if (*p == '"') {
-                *p = '\0';
-                state = 0;
-            }
+    int state = 0; // 0: 空白状态, 1: 普通参数状态, 2: 引号状态
+    char *start = buf;
+    
+    while (*buf != '\0') {
+        switch (state) {
+            case 0: // 空白状态
+                if (*buf == ' ') {
+                    buf++;
+                } else if (*buf == '"') {
+                    state = 2;
+                    start = buf + 1;
+                    buf++;
+                } else {
+                    state = 1;
+                    start = buf;
+                    buf++;
+                }
+                break;
+                
+            case 1: // 普通参数状态
+                if (*buf == ' ') {
+                    *buf = '\0';
+                    argv[argc++] = start;
+                    state = 0;
+                    buf++;
+                } else if (*buf == '\0') {
+                    argv[argc++] = start;
+                    state = 0;
+                } else {
+                    buf++;
+                }
+                break;
+                
+            case 2: // 引号状态
+                if (*buf == '"') {
+                    *buf = '\0';
+                    argv[argc++] = start;
+                    state = 0;
+                    buf++;
+                } else if (*buf == '\0') {
+                    argv[argc++] = start;
+                    state = 0;
+                } else {
+                    buf++;
+                }
+                break;
         }
-        if (argc >= MAX_ARGS) break;
-        p++;
     }
+    
+    // 处理最后一个参数
+    if (state == 1 || state == 2) {
+        argv[argc++] = start;
+    }
+    
     argv[argc] = NULL;
     return argc;
 }

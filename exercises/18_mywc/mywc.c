@@ -23,21 +23,32 @@ char to_lower(char c) { return tolower(c); }
 
 // 添加单词到哈希表
 void add_word(WordCount **hash_table, const char *word) {
-    unsigned int h = hash(word);
-    WordCount *node = hash_table[h];
-    while (node) {
-        if (strcmp(node->word, word) == 0) {
-            node->count++;
-            return;
-        }
-        node = node->next;
+  unsigned int index = hash(word);
+  WordCount *current = hash_table[index];
+  
+  // 检查是否已存在相同的单词
+  while (current) {
+    if (strcmp(current->word, word) == 0) {
+      current->count++;
+      return;
     }
-    WordCount *new_node = malloc(sizeof(WordCount));
-    strncpy(new_node->word, word, MAX_WORD_LEN - 1);
-    new_node->word[MAX_WORD_LEN - 1] = '\0';
-    new_node->count = 1;
-    new_node->next = hash_table[h];
-    hash_table[h] = new_node;
+    current = current->next;
+  }
+  
+  // 创建新的 WordCount 节点
+  WordCount *new_word = malloc(sizeof(WordCount));
+  if (!new_word) {
+    perror("Memory allocation failed");
+    exit(EXIT_FAILURE);
+  }
+  
+  strncpy(new_word->word, word, MAX_WORD_LEN - 1);
+  new_word->word[MAX_WORD_LEN - 1] = '\0';
+  new_word->count = 1;
+  new_word->next = hash_table[index];
+  
+  // 将新节点添加到哈希表
+  hash_table[index] = new_word;
 }
 
 // 打印单词统计结果
@@ -45,26 +56,26 @@ void print_word_counts(WordCount **hash_table) {
   printf("Word Count Statistics:\n");
   printf("======================\n");
 
-    for (int i = 0; i < HASH_SIZE; i++) {
-        WordCount *node = hash_table[i];
-        while (node) {
-            printf("%-21s%d\n", node->word, node->count);
-            node = node->next;
-        }
+  for (int i = 0; i < HASH_SIZE; i++) {
+    WordCount *current = hash_table[i];
+    while (current) {
+      printf("%-20s %d\n", current->word, current->count);
+      current = current->next;
     }
+  }
 }
 
 // 释放哈希表内存
 void free_hash_table(WordCount **hash_table) {
-    for (int i = 0; i < HASH_SIZE; i++) {
-        WordCount *node = hash_table[i];
-        while (node) {
-            WordCount *tmp = node;
-            node = node->next;
-            free(tmp);
-        }
+  for (int i = 0; i < HASH_SIZE; i++) {
+    WordCount *current = hash_table[i];
+    while (current) {
+      WordCount *next = current->next;
+      free(current);
+      current = next;
     }
-    free(hash_table);
+  }
+  free(hash_table);
 }
 
 // 处理文件并统计单词

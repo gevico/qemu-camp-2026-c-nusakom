@@ -12,46 +12,42 @@
 int parse_url(const char* url) {
     int err = 0;
 
-    // 找到 '?' 的位置
-    const char* query = strchr(url, '?');
+    if (!url) {
+        return 0;
+    }
+
+    // 找到查询参数部分
+    const char* query_start = strchr(url, '?');
+    if (!query_start) {
+        return 0; // 没有查询参数
+    }
+    query_start++;
+    
+    // 复制查询参数部分以便修改
+    size_t query_len = strlen(query_start);
+    char* query = (char*)malloc(query_len + 1);
     if (!query) {
-        err = -1;
-        goto exit;
+        err = errno;
+        return err;
     }
-    query++; // 跳过 '?'
-
-    char key[256], value[256];
-    const char* p = query;
-
-    while (*p) {
-        // 解析 key
-        int ki = 0;
-        while (*p && *p != '=' && *p != '&') {
-            key[ki++] = *p++;
+    strcpy(query, query_start);
+    
+    // 分割参数
+    char* token = strtok(query, "&");
+    while (token) {
+        // 分割key和value
+        char* equals = strchr(token, '=');
+        if (equals) {
+            *equals = '\0';
+            char* key = token;
+            char* value = equals + 1;
+            
+            printf("key = %s, value = %s\n", key, value);
         }
-        key[ki] = '\0';
-
-        // 跳过 '='
-        if (*p == '=') p++;
-
-        // 解析 value
-        int vi = 0;
-        while (*p && *p != '&') {
-            // 【修改点】：移除 '+' -> ' ' 的转换逻辑，直接保留原字符
-            // 如果题目后续要求支持标准URL解码（%XX），可以在此处添加逻辑
-            // 但针对当前测试，必须原样输出 '+'
-            value[vi++] = *p++;
-        }
-        value[vi] = '\0';
-
-        // 按测试要求输出格式
-        printf("key = %s, value = %s\n", key, value);
-
-        // 跳过 '&'
-        if (*p == '&') p++;
+        token = strtok(NULL, "&");
     }
-
-exit:
+    
+    free(query);
     return err;
 }
 

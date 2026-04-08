@@ -12,19 +12,32 @@ typedef struct {
 
 Student students[MAX_STUDENTS];
 
-void quick_sort(int left, int right) {
-    if (left >= right) return;
-    int i = left, j = right;
-    Student pivot = students[left];
-    while (i < j) {
-        while (i < j && students[j].score <= pivot.score) j--;
-        students[i] = students[j];
-        while (i < j && students[i].score >= pivot.score) i++;
-        students[j] = students[i];
+int partition(int left, int right) {
+    Student pivot = students[right];
+    int i = left - 1;
+    
+    for (int j = left; j < right; j++) {
+        if (students[j].score >= pivot.score) {
+            i++;
+            Student temp = students[i];
+            students[i] = students[j];
+            students[j] = temp;
+        }
     }
-    students[i] = pivot;
-    quick_sort(left, i - 1);
-    quick_sort(i + 1, right);
+    
+    Student temp = students[i + 1];
+    students[i + 1] = students[right];
+    students[right] = temp;
+    
+    return i + 1;
+}
+
+void quick_sort(int left, int right) {
+    if (left < right) {
+        int pivot_index = partition(left, right);
+        quick_sort(left, pivot_index - 1);
+        quick_sort(pivot_index + 1, right);
+    }
 }
 
 int main(void) {

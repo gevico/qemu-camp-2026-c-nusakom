@@ -27,19 +27,29 @@ static void josephus_problem(int n, int k, int m) {
         current = current->next;
     }
 
-    // 依次出列
-    for (int out = 0; out < n; ++out) {
-        // 从 current 走 m-1 步
-        for (int step = 1; step < m; ++step) {
+    // 执行约瑟夫环淘汰过程
+    int count = n;
+    while (count > 0) {
+        // 移动 m-1 步
+        for (int i = 1; i < m; ++i) {
             prev = current;
             current = current->next;
         }
-        printf("%d ", current->id);
-        // 删除 current
-        Node* to_remove = current;
+        
+        // 打印出列节点
+        if (count == n) {
+            printf("%d", current->id);
+        } else {
+            printf(" %d", current->id);
+        }
+        
+        // 移除当前节点
         prev->next = current->next;
-        current = prev->next;
-        free(to_remove);
+        Node* temp = current;
+        current = current->next;
+        free(temp);
+        
+        count--;
     }
     
     printf("\n");
