@@ -38,22 +38,28 @@ int __cmd_myfile(const char* filename) {
     fflush(stdout);
     printf("filepath: %s\n", filepath);
 
+    // 打开文件
     fd = open(filepath, O_RDONLY);
     if (fd < 0) {
-        fprintf(stderr, "无法打开文件: %s\n", filepath);
-        return 1;
+        perror("open");
+        return -1;
     }
 
-    if (read(fd, &ehdr, sizeof(ehdr)) != sizeof(ehdr)) {
-        fprintf(stderr, "读取 ELF 头失败\n");
+    // 读取 ELF 头部
+    if (read(fd, &ehdr, sizeof(Elf64_Ehdr)) != sizeof(Elf64_Ehdr)) {
+        perror("read");
         close(fd);
-        return 1;
+        return -1;
     }
 
-    if (memcmp(ehdr.e_ident, ELFMAG, SELFMAG) != 0) {
-        fprintf(stderr, "不是有效的 ELF 文件: %s\n", filepath);
+    // 检查 ELF 魔数
+    if (ehdr.e_ident[EI_MAG0] != ELFMAG0 || 
+        ehdr.e_ident[EI_MAG1] != ELFMAG1 || 
+        ehdr.e_ident[EI_MAG2] != ELFMAG2 || 
+        ehdr.e_ident[EI_MAG3] != ELFMAG3) {
+        printf("Not an ELF file\n");
         close(fd);
-        return 1;
+        return -1;
     }
 
     print_elf_type(ehdr.e_type);
