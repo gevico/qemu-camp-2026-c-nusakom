@@ -1,49 +1,52 @@
 PWD     := $(shell pwd)
 CC      := gcc
-CFLAGS  := -Wall -I$(PWD)/include
+INC     := -I$(PWD)/include \
+           -I$(PWD)/src/mysed \
+           -I$(PWD)/src/myfile \
+           -I$(PWD)/src/mywc \
+           -I$(PWD)/src/mytrans
+CFLAGS  := -Wall $(INC)
 OBJDIR  := $(PWD)/obj
 BINDIR  := $(PWD)/bin
 
-SUBDIRS := mysed myfile mywc mytrans
+OBJS := \
+    $(OBJDIR)/mysed.o \
+    $(OBJDIR)/myfile.o \
+    $(OBJDIR)/mywc.o \
+    $(OBJDIR)/mytrans.o \
+    $(OBJDIR)/myhash.o \
+    $(OBJDIR)/main.o
 
-# 每个子模块的库路径
-LIB_mysed   := $(OBJDIR)/libmysed.a
-LIB_myfile  := $(OBJDIR)/libmyfile.a
-LIB_mywc    := $(OBJDIR)/libmywc.a
-LIB_mytrans := $(OBJDIR)/libmytrans.a
-ALL_LIBS    := $(LIB_mysed) $(LIB_myfile) $(LIB_mywc) $(LIB_mytrans)
-
-# 传给子模块的链接命令（顶层统一管理）
-LINKCMD := $(CC) -o $(BINDIR)/mybash $(OBJDIR)/mybash/main.o \
-	-L$(OBJDIR) -lmysed -lmywc -lmytrans -lmyfile
-
-.PHONY: all $(SUBDIRS) mybash clean
+.PHONY: all clean
 
 all: mybash
 
-# 构建各子模块静态库
-$(LIB_mysed):
+$(OBJDIR):
 	@mkdir -p $(OBJDIR)
-	$(MAKE) -C src/mysed OBJDIR=$(OBJDIR) CC=$(CC) CFLAGS="$(CFLAGS) -I$(PWD)/src/mysed"
 
-$(LIB_myfile):
-	@mkdir -p $(OBJDIR)
-	$(MAKE) -C src/myfile OBJDIR=$(OBJDIR) CC=$(CC) CFLAGS="$(CFLAGS) -I$(PWD)/src/myfile"
+$(BINDIR):
+	@mkdir -p $(BINDIR)
 
-$(LIB_mywc):
-	@mkdir -p $(OBJDIR)
-	$(MAKE) -C src/mywc OBJDIR=$(OBJDIR) CC=$(CC) CFLAGS="$(CFLAGS) -I$(PWD)/src/mywc"
+$(OBJDIR)/mysed.o:   src/mysed/mysed.c     | $(OBJDIR)
+	$(CC) $(CFLAGS) -c $< -o $@
 
-$(LIB_mytrans):
-	@mkdir -p $(OBJDIR)
-	$(MAKE) -C src/mytrans OBJDIR=$(OBJDIR) CC=$(CC) CFLAGS="$(CFLAGS) -I$(PWD)/src/mytrans"
+$(OBJDIR)/myfile.o:  src/myfile/myfile.c   | $(OBJDIR)
+	$(CC) $(CFLAGS) -c $< -o $@
 
-# 构建 mybash 可执行文件
-mybash: $(ALL_LIBS)
-	@mkdir -p $(OBJDIR)/mybash $(BINDIR)
-	$(CC) $(CFLAGS) -c src/mybash/main.c -o $(OBJDIR)/mybash/main.o
-	$(CC) -o $(BINDIR)/mybash $(OBJDIR)/mybash/main.o \
-		-L$(OBJDIR) -lmysed -lmywc -lmytrans -lmyfile
+$(OBJDIR)/mywc.o:    src/mywc/mywc.c       | $(OBJDIR)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(OBJDIR)/mytrans.o: src/mytrans/mytrans.c | $(OBJDIR)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(OBJDIR)/myhash.o:  src/mytrans/myhash.c  | $(OBJDIR)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(OBJDIR)/main.o:    src/mybash/main.c     | $(OBJDIR)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+mybash: $(OBJS) | $(BINDIR)
+	$(CC) -o $(BINDIR)/mybash $(OBJS)
 	cp $(BINDIR)/mybash ./mybash
 
 clean:
